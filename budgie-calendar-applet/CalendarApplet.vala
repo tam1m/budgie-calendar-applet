@@ -10,14 +10,14 @@
  * (at your option) any later version.
  */
 
-public class CalendarPlugin: Budgie.Plugin, Peas.ExtensionBase {
-    public Budgie.Applet get_panel_widget(string uuid) {
+public class CalendarPlugin : Budgie.Plugin, Peas.ExtensionBase {
+public Budgie.Applet get_panel_widget(string uuid) {
         return new CalendarApplet();
-    }
+}
 }
 
 enum ClockFormat {
-    TWENTYFOUR = 0,
+        TWENTYFOUR = 0,
         TWELVE = 1;
 }
 
@@ -26,41 +26,41 @@ const string CALENDAR_MIME = "text/calendar";
 
 private static const string date_format = "%e %b %Y";
 
-public class CalendarApplet: Budgie.Applet {
+public class CalendarApplet : Budgie.Applet {
 
-    protected Gtk.EventBox widget;
-    protected Gtk.Label clock;
-    protected Gtk.Calendar calendar;
-    protected Gtk.Popover popover;
+protected Gtk.EventBox widget;
+protected Gtk.Label clock;
+protected Gtk.Calendar calendar;
+protected Gtk.Popover popover;
 
-    protected bool ampm = false;
-    protected bool show_seconds = false;
-    protected bool show_date = false;
+protected bool ampm = false;
+protected bool show_seconds = false;
+protected bool show_date = false;
 
-    private DateTime time;
+private DateTime time;
 
-    protected Settings settings;
+protected Settings settings;
 
-    private unowned Budgie.PopoverManager ? manager = null;
+private unowned Budgie.PopoverManager ? manager = null;
 
-    AppInfo? calprov = null;
+AppInfo ? calprov = null;
 
-    public CalendarApplet() {
+public CalendarApplet() {
         clock = new Gtk.Label("");
-	clock.valign = Gtk.Align.CENTER;
+        clock.valign = Gtk.Align.CENTER;
         widget = new Gtk.EventBox();
         widget.add(clock);
         margin_bottom = 2;
         popover = new Gtk.Popover(widget);
 
         widget.button_press_event.connect((e)=> {
-            if (e.button != 1) {
-                return Gdk.EVENT_PROPAGATE;
-            }
-	    Toggle();
-            return Gdk.EVENT_STOP;
-        });
-	widget.set_tooltip_text(time.format(date_format));
+                        if (e.button != 1) {
+                                return Gdk.EVENT_PROPAGATE;
+                        }
+                        Toggle();
+                        return Gdk.EVENT_STOP;
+                });
+        widget.set_tooltip_text(time.format(date_format));
 
 
         // Create the popover container
@@ -73,11 +73,11 @@ public class CalendarApplet: Budgie.Applet {
         // check current month
         time = new DateTime.now_local();
         calendar.month_changed.connect(() => {
-            if (calendar.month + 1 == time.get_month())
-                calendar.mark_day(time.get_day_of_month());
-            else
-                calendar.unmark_day(time.get_day_of_month());
-        });
+                        if (calendar.month + 1 == time.get_month())
+                                calendar.mark_day(time.get_day_of_month());
+                        else
+                                calendar.unmark_day(time.get_day_of_month());
+                });
 
         // Setup calprov
         calprov = AppInfo.get_default_for_type(CALENDAR_MIME, false);
@@ -103,73 +103,73 @@ public class CalendarApplet: Budgie.Applet {
         on_settings_change("clock-show-date");
         update_clock();
 
-	popover.get_child().show_all();
+        popover.get_child().show_all();
 
         add(widget);
         show_all();
-    }
+}
 
-    public void Toggle(){
+public void Toggle(){
         if (popover.get_visible()) {
-            popover.hide();
+                popover.hide();
         } else {
-            popover.get_child().show_all();
-            this.manager.show_popover(ebox);
-        }        
-    }
-    
-    public override void invoke_action(Budgie.PanelAction action) {
+                popover.get_child().show_all();
+                this.manager.show_popover(widget);
+        }
+}
+
+public override void invoke_action(Budgie.PanelAction action) {
         Toggle();
-    }
+}
 
 
-    public override void update_popovers(Budgie.PopoverManager ? manager) {
+public override void update_popovers(Budgie.PopoverManager ? manager) {
         this.manager = manager;
         manager.register_popover(widget, popover);
-    }
+}
 
-    protected void on_settings_change(string key) {
+protected void on_settings_change(string key) {
         switch (key) {
         case "clock-format":
-            ClockFormat f = (ClockFormat) settings.get_enum(key);
-            ampm = f == ClockFormat.TWELVE;
-            break;
+                ClockFormat f = (ClockFormat) settings.get_enum(key);
+                ampm = f == ClockFormat.TWELVE;
+                break;
         case "clock-show-seconds":
-            show_seconds = settings.get_boolean(key);
-            break;
+                show_seconds = settings.get_boolean(key);
+                break;
         case "clock-show-date":
-            show_date = settings.get_boolean(key);
-            break;
+                show_date = settings.get_boolean(key);
+                break;
         }
         if (get_toplevel() != null) {
-            get_toplevel().queue_draw();
+                get_toplevel().queue_draw();
         }
         /* Lazy update on next clock sync */
-    }
+}
 
-    /**
-     * This is called once every second, updating the time
-     */
-    protected bool update_clock() {
+/**
+ * This is called once every second, updating the time
+ */
+protected bool update_clock() {
         time = new DateTime.now_local();
         string format = "";
 
         if (show_date) {
-            format += "%a %b %d  ";
+                format += "%a %b %d  ";
         }
 
         if (ampm) {
-            format += "%l:%M";
+                format += "%l:%M";
         } else {
-            format += "%H:%M";
+                format += "%H:%M";
         }
 
         if (show_seconds) {
-            format += ":%S";
+                format += ":%S";
         }
 
         if (ampm) {
-            format += " %p";
+                format += " %p";
         }
         string ftime = " <big>%s</big> ".printf(format);
 
@@ -177,42 +177,42 @@ public class CalendarApplet: Budgie.Applet {
         clock.set_markup(ctime);
 
         return true;
-    }
+}
 
-    void update_cal()
-    {
+void update_cal()
+{
         calprov = AppInfo.get_default_for_type(CALENDAR_MIME, false);
-    }
+}
 
-    void on_date_activate()
-    {
+void on_date_activate()
+{
         var app_info = new DesktopAppInfo("gnome-datetime-panel.desktop");
 
         if (app_info == null) {
-            return;
+                return;
         }
         try {
-            app_info.launch(null, null);
+                app_info.launch(null, null);
         } catch (Error e) {
-            message("Unable to launch gnome-datetime-panel.desktop: %s", e.message);
+                message("Unable to launch gnome-datetime-panel.desktop: %s", e.message);
         }
-    }
+}
 
-    void on_cal_activate()
-    {
+void on_cal_activate()
+{
         if (calprov == null) {
-            return;
+                return;
         }
         try {
-            calprov.launch(null, null);
+                calprov.launch(null, null);
         } catch (Error e) {
-            message("Unable to launch %s: %s", calprov.get_name(), e.message);
+                message("Unable to launch %s: %s", calprov.get_name(), e.message);
         }
-    }
+}
 }
 
 [ModuleInit]
 public void peas_register_types(TypeModule module) {
-    var objmodule = module as Peas.ObjectModule;
-    objmodule.register_extension_type(typeof (Budgie.Plugin), typeof (CalendarPlugin));
+        var objmodule = module as Peas.ObjectModule;
+        objmodule.register_extension_type(typeof (Budgie.Plugin), typeof (CalendarPlugin));
 }
