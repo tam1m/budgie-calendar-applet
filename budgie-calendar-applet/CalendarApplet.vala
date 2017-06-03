@@ -21,10 +21,9 @@ enum ClockFormat {
         TWELVE = 1;
 }
 
-public static
-const string CALENDAR_MIME = "text/calendar";
+public const string CALENDAR_MIME = "text/calendar";
 
-private static const string date_format = "%e %b %Y";
+private const string date_format = "%e %b %Y";
 
 public class CalendarApplet : Budgie.Applet {
 
@@ -52,6 +51,7 @@ public CalendarApplet() {
         widget.add(clock);
         margin_bottom = 2;
         popover = new Gtk.Popover(widget);
+        time = new DateTime.now_local();
 
         widget.button_press_event.connect((e)=> {
                         if (e.button != 1) {
@@ -71,7 +71,6 @@ public CalendarApplet() {
         calendar = new Gtk.Calendar();
 
         // check current month
-        time = new DateTime.now_local();
         calendar.month_changed.connect(() => {
                         if (calendar.month + 1 == time.get_month())
                                 calendar.mark_day(time.get_day_of_month());
