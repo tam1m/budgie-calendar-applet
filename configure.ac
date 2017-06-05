@@ -9,6 +9,7 @@ AC_PREFIX_DEFAULT(/usr/local)
 AM_SILENT_RULES([yes])
 LT_INIT([disable-static])
 AC_CONFIG_MACRO_DIR([m4])
+GLIB_GSETTINGS
 
 m4_define([budgie_required_version], [1])
 

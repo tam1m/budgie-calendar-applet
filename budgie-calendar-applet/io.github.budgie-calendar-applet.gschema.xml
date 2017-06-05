@@ -1,0 +1,11 @@
+<schemalist>
+  <schema id="io.github.budgie-calendar-applet" path="/io/github/budgie-calendar-applet/" gettext-domain="budgie-calendar-applet">
+    <key name="date-format" type="s">
+      <default l10n="messages">"%e %b %Y"</default>
+      <summary>Clock Format</summary>
+      <description>
+        Show the clock at the format you want
+      </description>
+    </key>
+  </schema>
+</schemalist> 

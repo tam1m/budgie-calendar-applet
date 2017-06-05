@@ -28,3 +28,6 @@ calendarapplet_DATA = \
 
 EXTRA_DIST = \
 	CalendarApplet.plugin
+
+gsettings_SCHEMAS = io.github.budgie-calendar-applet.gschema.xml
+@GSETTINGS_RULES@

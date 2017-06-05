@@ -23,8 +23,6 @@ enum ClockFormat {
 
 public const string CALENDAR_MIME = "text/calendar";
 
-public const string date_format = "%e %b %Y";
-
 public class CalendarApplet : Budgie.Applet {
 
 protected Gtk.EventBox widget;
@@ -35,10 +33,13 @@ protected Gtk.Popover popover;
 protected bool ampm = false;
 protected bool show_seconds = false;
 protected bool show_date = false;
+protected bool date_format = false;
 
 private DateTime time;
 
 protected Settings settings;
+
+protected Settings applet_settings;
 
 private unowned Budgie.PopoverManager ? manager = null;
 
@@ -56,7 +57,68 @@ public CalendarApplet() {
         calendar = new Gtk.Calendar();
         var box = new Gtk.ListBox();
 
-        widget.set_tooltip_text(time.format(date_format));
+        Gtk.Entry entry = new Gtk.Entry ();
+
+        applet_settings = new Settings ("io.github.budgie-calendar-applet");
+
+        settings = new Settings("org.gnome.desktop.interface");
+
+        var dateformat = applet_settings.get_string ("date-format");
+
+        // Add a default-text:
+        entry.set_text (dateformat);
+
+        // Print text to stdout on enter:
+        entry.activate.connect (() => {
+                        dateformat = entry.get_text ();
+                        stdout.printf ("%s\n", dateformat);
+                        applet_settings.set_string ("date-format", dateformat);
+                        update_clock();
+                });
+
+        // Add a delete-button:
+        entry.set_icon_from_icon_name (Gtk.EntryIconPosition.SECONDARY, "edit-clear");
+        entry.icon_press.connect ((pos, event) => {
+                        if (pos == Gtk.EntryIconPosition.SECONDARY) {
+                                entry.set_text ("");
+                        }
+                });
+
+        var label_date = new Gtk.Label ("Show date");
+        var switch_date = new Gtk.Switch ();
+        var label_seconds = new Gtk.Label ("Show seconds");
+        var switch_seconds = new Gtk.Switch ();
+        var label_format = new Gtk.Label ("Use 24h time");
+        var switch_format = new Gtk.Switch ();
+
+        // Get current setting to set the switch button
+        if(settings.get_boolean ("clock-show-date") == true) {
+                switch_date.set_active (true);
+        }
+        if(settings.get_boolean ("clock-show-seconds") == true) {
+                switch_seconds.set_active (true);
+        }
+        if(settings.get_enum("clock-format") == ClockFormat.TWENTYFOUR) {
+                switch_format.set_active (true);
+        }
+
+        switch_date.notify["active"].connect (date_switcher);
+        switch_seconds.notify["active"].connect (seconds_switcher);
+        switch_format.notify["active"].connect (format_switcher);
+
+        var grid = new Gtk.Grid ();
+        grid.set_column_spacing(35);
+        grid.set_row_spacing(10);
+        grid.set_margin_start(5);
+        grid.set_margin_end(5);
+        grid.attach(label_date, 0, 0, 1, 1);
+        grid.attach(switch_date, 1, 0, 1, 1);
+        grid.attach(label_seconds, 0, 1, 1, 1);
+        grid.attach(switch_seconds, 1, 1, 1, 1);
+        grid.attach(label_format, 0, 2, 1, 1);
+        grid.attach(switch_format, 1, 2, 1, 1);
+
+        widget.set_tooltip_text(time.format(dateformat));
 
         widget.button_press_event.connect((e)=> {
                         if (e.button != 1) {
@@ -86,6 +148,8 @@ public CalendarApplet() {
         calendar.day_selected_double_click.connect(on_cal_activate);
 
         box.insert(calendar, 0);
+        box.insert(grid, 0);
+        box.insert(entry, 0);
 
         // Time and Date settings
         var time_and_date = new Gtk.Button.with_label("Time and date settings");
@@ -94,7 +158,6 @@ public CalendarApplet() {
 
         Timeout.add_seconds_full(GLib.Priority.LOW, 1, update_clock);
 
-        settings = new Settings("org.gnome.desktop.interface");
         settings.changed.connect(on_settings_change);
         on_settings_change("clock-format");
         on_settings_change("clock-show-seconds");
@@ -103,6 +166,58 @@ public CalendarApplet() {
         add(widget);
         show_all();
 }
+
+void date_switcher (Object switcher, ParamSpec pspec) {
+        if ((switcher as Gtk.Switch).get_active())
+        {
+                this.settings.set_boolean("clock-show-date", true);
+                Idle.add(()=> {
+                                this.update_clock();
+                                return false;
+                        });
+        }  else {
+                this.settings.set_boolean("clock-show-date", false);
+                Idle.add(()=> {
+                                this.update_clock();
+                                return false;
+                        });
+        }
+}
+
+void seconds_switcher (Object switcher, ParamSpec pspec) {
+        if ((switcher as Gtk.Switch).get_active())
+        {
+                this.settings.set_boolean("clock-show-seconds", true);
+                Idle.add(()=> {
+                                this.update_clock();
+                                return false;
+                        });
+        }  else {
+                this.settings.set_boolean("clock-show-seconds", false);
+                Idle.add(()=> {
+                                this.update_clock();
+                                return false;
+                        });
+        }
+}
+
+void format_switcher (Object switcher, ParamSpec pspec) {
+        if ((switcher as Gtk.Switch).get_active())
+        {
+                this.settings.set_enum("clock-format", ClockFormat.TWENTYFOUR);
+                Idle.add(()=> {
+                                this.update_clock();
+                                return false;
+                        });
+        }  else {
+                this.settings.set_enum("clock-format", ClockFormat.TWELVE);
+                Idle.add(()=> {
+                                this.update_clock();
+                                return false;
+                        });
+        }
+}
+
 
 public void Toggle(){
         if (popover.get_visible()) {
@@ -145,13 +260,17 @@ protected void on_settings_change(string key) {
  * This is called once every second, updating the time
  */
 protected bool update_clock() {
-        time = new DateTime.now_local();
-        string format;
 
+        time = new DateTime.now_local();
+        string format = "";
+
+        if (show_date) {
+                format += applet_settings.get_string ("date-format");
+        }
         if (ampm) {
-                format = "%l:%M";
+                format += "%l:%M";
         } else {
-                format = "%H:%M";
+                format += "%H:%M";
         }
         if (show_seconds) {
                 format += ":%S";
@@ -160,9 +279,6 @@ protected bool update_clock() {
                 format += " %p";
         }
         string ftime = " <big>%s</big> ".printf(format);
-        if (show_date) {
-                ftime += " <big>%x</big>";
-        }
 
         var ctime = time.format(ftime);
         clock.set_markup(ctime);
