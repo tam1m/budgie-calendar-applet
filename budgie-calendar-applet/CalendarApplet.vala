@@ -33,7 +33,8 @@ protected Gtk.Popover popover;
 protected bool ampm = false;
 protected bool show_seconds = false;
 protected bool show_date = false;
-protected bool date_format = false;
+protected bool date_format_enable = false;
+protected string date_format;
 
 private DateTime time;
 
@@ -162,6 +163,9 @@ public CalendarApplet() {
         on_settings_change("clock-format");
         on_settings_change("clock-show-seconds");
         on_settings_change("clock-show-date");
+        on_settings_change("date-format-enable");
+        on_settings_change("date-format");
+
         update_clock();
         add(widget);
         show_all();
@@ -249,6 +253,12 @@ protected void on_settings_change(string key) {
         case "clock-show-date":
                 show_date = settings.get_boolean(key);
                 break;
+        case "date-format-enable":
+                date_format_enable = applet_settings.get_boolean(key);
+                break;
+        case "date-format":
+                date_format = applet_settings.get_string(key);
+                break;
         }
         if (get_toplevel() != null) {
                 get_toplevel().queue_draw();
@@ -264,24 +274,34 @@ protected bool update_clock() {
         time = new DateTime.now_local();
         string format = "";
 
-        if (show_date) {
-                format += applet_settings.get_string ("date-format");
-        }
-        if (ampm) {
-                format += "%l:%M";
-        } else {
-                format += "%H:%M";
-        }
-        if (show_seconds) {
-                format += ":%S";
-        }
-        if (ampm) {
-                format += " %p";
-        }
-        string ftime = " <big>%s</big> ".printf(format);
+        date_format_enable = applet_settings.get_boolean("date-format-enable");
 
-        var ctime = time.format(ftime);
-        clock.set_markup(ctime);
+        if (date_format_enable) {
+                format += applet_settings.get_string("date-format");
+                string ftime = " <big>%s</big> ".printf(format);
+                var ctime = time.format(ftime);
+                clock.set_markup(ctime);
+        }else{
+                if (ampm) {
+                        format = "%l:%M";
+                } else {
+                        format = "%H:%M";
+                }
+                if (show_seconds) {
+                        format += ":%S";
+                }
+                if (ampm) {
+                        format += " %p";
+                }
+
+                string ftime = " <big>%s</big> ".printf(format);
+
+                if (show_date) {
+                        ftime += " <big>%x</big>";
+                }
+                var ctime = time.format(ftime);
+                clock.set_markup(ctime);
+        }
 
         return true;
 }
