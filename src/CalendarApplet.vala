@@ -142,6 +142,7 @@ public class CalendarApplet : Budgie.Applet {
 
         // Calendar
         calendar = new Gtk.Calendar ();
+        calendar.get_style_context().add_class("raven-calendar");
         calendar.set_can_focus (false);
         main_grid.attach (calendar, 0, 2, 2, 1);
 
