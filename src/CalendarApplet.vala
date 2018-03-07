@@ -190,6 +190,9 @@ public class CalendarApplet : Budgie.Applet {
         switch_custom_format = new Gtk.Switch ();
         switch_custom_format.set_halign (Gtk.Align.END);
 
+        if(applet_settings.get_boolean("custom-format-switch"))
+            switch_custom_format.set_active(true);
+
         string label_link = (_ ("Date format syntax"));
         Gtk.LinkButton linkbutton = new Gtk.LinkButton.with_label ("http://www.foragoodstrftime.com", label_link);
 
@@ -215,6 +218,18 @@ public class CalendarApplet : Budgie.Applet {
         });
 
         applet_settings.bind ("custom-format-switch", switch_custom_format, "active", SettingsBindFlags.GET | SettingsBindFlags.SET);
+
+        if (switch_custom_format.get_active()){
+            custom_format.set_sensitive (true);
+            switch_date.set_sensitive (false);
+            switch_seconds.set_sensitive (false);
+            switch_format.set_sensitive (false);
+      } else {
+            custom_format.set_sensitive (false);
+            switch_date.set_sensitive (true);
+            switch_seconds.set_sensitive (true);
+            switch_format.set_sensitive (true);
+        }
 
         switch_custom_format.notify["active"].connect (() => {
             if ((switch_custom_format as Gtk.Switch).get_active ()) {
@@ -415,7 +430,7 @@ public class CalendarApplet : Budgie.Applet {
         time = new DateTime.now_local ();
         string format;
 
-        if (switch_custom_format.get_active ()) {
+        if (applet_settings.get_boolean("custom-format-switch")) {
             unowned string title = custom_format.get_text ();
             format = title;
         } else {
